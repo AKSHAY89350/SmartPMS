@@ -16,7 +16,7 @@ permissions:
 
 env:
   DOTNET_VERSION: '10.0.x'
-  SOLUTION_FILE: 'SmartPMS.sln'
+  SOLUTION_FILE: 'SmartPMS.slnx'
 
 jobs:
   backend-ci:
