@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="SmartPMS.ApiGateway/SmartPMS.ApiGateway.csproj" />
+  <Project Path="SmartPMS.EmployeeService/SmartPMS.EmployeeService.csproj" />
+  <Project Path="SmartPMS.IdentityService/SmartPMS.IdentityService.csproj" />
+  <Project Path="SmartPMS.PerformancePlanService/SmartPMS.PerformancePlanService.csproj" />
+  <Project Path="SmartPMS.Shared/SmartPMS.Shared.csproj" />
+</Solution>

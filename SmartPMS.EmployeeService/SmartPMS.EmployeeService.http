@@ -1,0 +1,6 @@
+@SmartPMS.EmployeeService_HostAddress = http://localhost:5032
+
+GET {{SmartPMS.EmployeeService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,6 @@
+@SmartPMS.PerformancePlanService_HostAddress = http://localhost:5029
+
+GET {{SmartPMS.PerformancePlanService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

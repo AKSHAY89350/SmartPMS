@@ -1,0 +1,6 @@
+@SmartPMS.ApiGateway_HostAddress = http://localhost:5157
+
+GET {{SmartPMS.ApiGateway_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
