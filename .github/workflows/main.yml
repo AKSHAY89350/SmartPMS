@@ -1,4 +1,4 @@
-name: Smart PMS Backend CI
+name: Smart PMS CI
 
 on:
   push:
@@ -16,6 +16,8 @@ permissions:
 env:
   DOTNET_VERSION: '10.0.x'
   SOLUTION_FILE: 'SmartPMS.slnx'
+  ANGULAR_PROJECT_PATH: 'SmartPMS.Web'
+  NODE_VERSION: '20.19.0'
 
 jobs:
   backend-ci:
@@ -39,3 +41,36 @@ jobs:
 
       - name: Run backend tests
         run: dotnet test ${{ env.SOLUTION_FILE }} --configuration Release --no-build --verbosity normal
+
+  angular-ci:
+    name: Angular - Install and Build
+    runs-on: ubuntu-latest
+    needs: backend-ci
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ env.ANGULAR_PROJECT_PATH }}/package-lock.json
+
+      - name: Install Angular dependencies
+        working-directory: ${{ env.ANGULAR_PROJECT_PATH }}
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Build Angular application
+        working-directory: ${{ env.ANGULAR_PROJECT_PATH }}
+        run: npm run build -- --configuration production
+
+      - name: Run Angular tests if available
+        working-directory: ${{ env.ANGULAR_PROJECT_PATH }}
+        run: npm run test --if-present -- --watch=false --browsers=ChromeHeadless
