@@ -1,1 +1,46 @@
-<p>dashboard works!</p>
+<div class="layout">
+  <aside class="sidebar">
+    <h2>Smart PMS</h2>
+
+    <nav>
+      <a routerLink="/dashboard">Dashboard</a>
+      <a routerLink="/employees">Employees</a>
+    </nav>
+
+    <button class="logout-btn" (click)="logout()">Logout</button>
+  </aside>
+
+  <main class="content">
+    <div class="topbar">
+      <h1>Dashboard</h1>
+      <span>{{ role }}</span>
+    </div>
+
+    <section class="welcome-card">
+      <h2>Welcome, {{ fullName }}</h2>
+      <p>Your Smart PMS account is active.</p>
+    </section>
+
+    <section class="profile-grid">
+      <div class="profile-card">
+        <label>Employee Code</label>
+        <strong>{{ employeeCode }}</strong>
+      </div>
+
+      <div class="profile-card">
+        <label>Email</label>
+        <strong>{{ email }}</strong>
+      </div>
+
+      <div class="profile-card">
+        <label>Role</label>
+        <strong>{{ role }}</strong>
+      </div>
+
+      <div class="profile-card">
+        <label>Status</label>
+        <strong>Logged In</strong>
+      </div>
+    </section>
+  </main>
+</div>

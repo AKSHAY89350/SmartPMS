@@ -62,7 +62,9 @@ export class AuthService {
   getFullName(): string {
     return localStorage.getItem('fullName') ?? '';
   }
-
+  getEmail(): string {
+    return localStorage.getItem('email') ?? '';
+  }
   getRole(): string {
     return localStorage.getItem('role') ?? '';
   }
@@ -70,7 +72,9 @@ export class AuthService {
   isLoggedIn(): boolean {
     return !!localStorage.getItem('token');
   }
-
+  getEmployeeCode(): string {
+    return localStorage.getItem('employeeCode') ?? '';
+  }
   logout(): void {
     localStorage.clear();
   }
