@@ -1,0 +1,64 @@
+<div class="layout">
+  <aside class="sidebar">
+    <h2>Smart PMS</h2>
+
+    <nav>
+      <a routerLink="/dashboard">Dashboard</a>
+      <a routerLink="/employees">Employees</a>
+    </nav>
+
+    <button class="logout-btn" (click)="logout()">Logout</button>
+  </aside>
+
+  <main class="content">
+    <div class="topbar">
+      <h1>Employees</h1>
+      <button class="refresh-btn" (click)="loadEmployees()">Refresh</button>
+    </div>
+
+    <div class="alert" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+
+    <div class="loading" *ngIf="isLoading">
+      Loading employees...
+    </div>
+
+    <div class="table-card" *ngIf="!isLoading">
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Department</th>
+            <th>Designation</th>
+            <th>Level</th>
+            <th>Joining Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let emp of employees">
+            <td>{{ emp.employeeCode }}</td>
+            <td>{{ emp.fullName }}</td>
+            <td>{{ emp.email }}</td>
+            <td>{{ emp.department }}</td>
+            <td>{{ emp.designation }}</td>
+            <td>{{ emp.level }}</td>
+            <td>{{ emp.joiningDate | date: 'dd-MMM-yyyy' }}</td>
+            <td>
+              <span class="status active" *ngIf="emp.isActive">Active</span>
+              <span class="status inactive" *ngIf="!emp.isActive">Inactive</span>
+            </td>
+          </tr>
+
+          <tr *ngIf="employees.length === 0">
+            <td colspan="8" class="empty">No employees found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
