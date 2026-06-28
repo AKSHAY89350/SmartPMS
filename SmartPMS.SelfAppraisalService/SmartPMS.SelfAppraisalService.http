@@ -1,0 +1,64 @@
+@SmartPMS_SelfAppraisalService_HostAddress = https://localhost:7286
+
+GET {{SmartPMS_SelfAppraisalService_HostAddress}}/api/selfappraisals/health
+Accept: application/json
+
+###
+
+POST {{SmartPMS_SelfAppraisalService_HostAddress}}/api/selfappraisals
+Content-Type: application/json
+
+{
+  "performancePlanId": 1,
+  "employeeId": 1,
+  "employeeCode": "EMP001",
+  "employeeName": "Akshay Kumar",
+  "financialYear": "2025-2026",
+  "items": [
+    {
+      "performancePlanItemId": 1,
+      "kraTitle": "Application Development",
+      "kpiDescription": "Develop and maintain SmartPMS modules",
+      "weightage": 40,
+      "target": "Deliver planned modules",
+      "achievement": "",
+      "selfRating": 0,
+      "employeeComments": "",
+      "displayOrder": 1
+    },
+    {
+      "performancePlanItemId": 2,
+      "kraTitle": "Database Optimization",
+      "kpiDescription": "Improve query and report performance",
+      "weightage": 30,
+      "target": "Improve response times",
+      "achievement": "",
+      "selfRating": 0,
+      "employeeComments": "",
+      "displayOrder": 2
+    },
+    {
+      "performancePlanItemId": 3,
+      "kraTitle": "Production Support",
+      "kpiDescription": "Resolve UAT and production issues",
+      "weightage": 30,
+      "target": "Resolve issues within SLA",
+      "achievement": "",
+      "selfRating": 0,
+      "employeeComments": "",
+      "displayOrder": 3
+    }
+  ]
+}
+
+###
+
+GET {{SmartPMS_SelfAppraisalService_HostAddress}}/api/selfappraisals
+
+###
+
+GET {{SmartPMS_SelfAppraisalService_HostAddress}}/api/selfappraisals/employee/1
+
+###
+
+POST {{SmartPMS_SelfAppraisalService_HostAddress}}/api/selfappraisals/1/submit
