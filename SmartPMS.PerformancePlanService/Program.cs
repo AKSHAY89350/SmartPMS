@@ -25,7 +25,9 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 
+
 var app = builder.Build();
+
 
 
 app.UseHttpsRedirection();
@@ -35,11 +37,5 @@ app.UseCors("SmartPMSCors");
 app.UseAuthorization();
 
 app.MapControllers();
-
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<PerformancePlanDbContext>();
-    dbContext.Database.EnsureCreated();
-}
 
 app.Run();
