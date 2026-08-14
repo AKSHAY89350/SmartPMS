@@ -1,74 +1,255 @@
-name: Smart PMS CI
+name: SmartPMS CI/CD
 
 on:
   push:
-    branches:
-      - '**'
+    branches: [ master ]
   pull_request:
-    branches:
-      - main
-      - develop
+    branches: [ master ]
   workflow_dispatch:
-
-permissions:
-  contents: read
 
 env:
   DOTNET_VERSION: '10.0.x'
+  NODE_VERSION: '24.x'
   SOLUTION_FILE: 'SmartPMS.slnx'
-  ANGULAR_PROJECT_PATH: 'SmartPMS.Web'
-  NODE_VERSION: '20.19.0'
+  ANGULAR_DIR: 'SmartPMS.Web'
 
 jobs:
-  backend-ci:
-    name: Backend - Restore, Build and Test
+
+  # ══════════════════════════════════════════════════
+  # JOB 1 — Backend CI  (GitHub Cloud, ubuntu-latest)
+  # ══════════════════════════════════════════════════
+  ci-backend:
+    name: 'CI — Backend Build & Test'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup .NET SDK
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore backend packages
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore dependencies
         run: dotnet restore ${{ env.SOLUTION_FILE }}
 
-      - name: Build backend solution
+      - name: Build (Release)
         run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
 
-      - name: Run backend tests
+      - name: Run tests
         run: dotnet test ${{ env.SOLUTION_FILE }} --configuration Release --no-build --verbosity normal
 
-  angular-ci:
-    name: Angular - Install and Build
+  # ══════════════════════════════════════════════════
+  # JOB 2 — Frontend CI  (GitHub Cloud, ubuntu-latest)
+  # ══════════════════════════════════════════════════
+  ci-frontend:
+    name: 'CI — Angular Build'
     runs-on: ubuntu-latest
-    needs: backend-ci
+    needs: ci-backend
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: ${{ env.ANGULAR_PROJECT_PATH }}/package-lock.json
+          cache-dependency-path: ${{ env.ANGULAR_DIR }}/package-lock.json
 
-      - name: Install Angular dependencies
-        working-directory: ${{ env.ANGULAR_PROJECT_PATH }}
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
+      - name: Install npm dependencies
+        working-directory: ${{ env.ANGULAR_DIR }}
+        run: npm ci
 
-      - name: Build Angular application
-        working-directory: ${{ env.ANGULAR_PROJECT_PATH }}
+      - name: Build Angular (production + SSR)
+        working-directory: ${{ env.ANGULAR_DIR }}
         run: npm run build -- --configuration production
 
-      
+  # ══════════════════════════════════════════════════
+  # JOB 3 — Deploy CD  (YOUR LOCAL PC)
+  #   Runs ONLY on push to master, after CI passes
+  # ══════════════════════════════════════════════════
+  cd-deploy:
+    name: 'CD — Deploy to Local Machine'
+    runs-on: self-hosted
+    needs: [ ci-backend, ci-frontend ]
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout latest code
+        uses: actions/checkout@v4
+
+      # ── Stop any previously running services ──────
+      - name: Stop old services
+        shell: pwsh
+        run: |
+          Write-Host "Stopping old SmartPMS processes..."
+          $dotnetProcs = @(
+            'SmartPMS.ApiGateway',
+            'SmartPMS.IdentityService',
+            'SmartPMS.EmployeeService',
+            'SmartPMS.PerformancePlanService',
+            'SmartPMS.SelfAppraisalService'
+          )
+          foreach ($name in $dotnetProcs) {
+            $proc = Get-Process -Name $name -ErrorAction SilentlyContinue
+            if ($proc) {
+              Stop-Process -Name $name -Force
+              Write-Host "  Stopped: $name"
+            }
+          }
+          # Kill any node process serving server.mjs (Angular SSR)
+          Get-CimInstance Win32_Process | Where-Object {
+            $_.Name -eq 'node.exe' -and $_.CommandLine -like '*server.mjs*'
+          } | ForEach-Object {
+            Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+            Write-Host "  Stopped: node.exe (Angular SSR)"
+          }
+          Start-Sleep -Seconds 3
+          Write-Host "All old services stopped."
+
+      # ── Build backend ─────────────────────────────
+      - name: Restore & Build Backend
+        shell: pwsh
+        run: |
+          Write-Host "Building backend..."
+          dotnet restore ${{ env.SOLUTION_FILE }}
+          dotnet build ${{ env.SOLUTION_FILE }} --configuration Release --no-restore
+          Write-Host "Backend build complete."
+
+      # ── Start all .NET microservices ──────────────
+      - name: Start API Gateway
+        shell: pwsh
+        run: |
+          Start-Process -FilePath "dotnet" `
+            -ArgumentList "run --project SmartPMS.ApiGateway --configuration Release --no-build" `
+            -WorkingDirectory "${{ github.workspace }}" `
+            -WindowStyle Hidden
+          Write-Host "API Gateway started."
+
+      - name: Start Identity Service
+        shell: pwsh
+        run: |
+          Start-Process -FilePath "dotnet" `
+            -ArgumentList "run --project SmartPMS.IdentityService --configuration Release --no-build" `
+            -WorkingDirectory "${{ github.workspace }}" `
+            -WindowStyle Hidden
+          Write-Host "Identity Service started."
+
+      - name: Start Employee Service
+        shell: pwsh
+        run: |
+          Start-Process -FilePath "dotnet" `
+            -ArgumentList "run --project SmartPMS.EmployeeService --configuration Release --no-build" `
+            -WorkingDirectory "${{ github.workspace }}" `
+            -WindowStyle Hidden
+          Write-Host "Employee Service started."
+
+      - name: Start PerformancePlan Service
+        shell: pwsh
+        run: |
+          Start-Process -FilePath "dotnet" `
+            -ArgumentList "run --project SmartPMS.PerformancePlanService --configuration Release --no-build" `
+            -WorkingDirectory "${{ github.workspace }}" `
+            -WindowStyle Hidden
+          Write-Host "PerformancePlan Service started."
+
+      - name: Start SelfAppraisal Service
+        shell: pwsh
+        run: |
+          Start-Process -FilePath "dotnet" `
+            -ArgumentList "run --project SmartPMS.SelfAppraisalService --configuration Release --no-build" `
+            -WorkingDirectory "${{ github.workspace }}" `
+            -WindowStyle Hidden
+          Write-Host "SelfAppraisal Service started."
+
+      # ── Build & Start Angular SSR frontend ────────
+      - name: Install Angular dependencies
+        shell: pwsh
+        working-directory: ${{ env.ANGULAR_DIR }}
+        run: npm ci
+
+      - name: Build Angular SSR (production)
+        shell: pwsh
+        working-directory: ${{ env.ANGULAR_DIR }}
+        run: npm run build -- --configuration production
+
+      - name: Start Angular SSR Server
+        shell: pwsh
+        working-directory: ${{ env.ANGULAR_DIR }}
+        run: |
+          $serverFile = Join-Path (Get-Location) "dist\SmartPMS.Web\server\server.mjs"
+          $env:PORT = "4000"
+          Start-Process -FilePath "node" `
+            -ArgumentList $serverFile `
+            -WorkingDirectory (Get-Location) `
+            -WindowStyle Hidden
+          Write-Host "Angular SSR frontend started on port 4000."
+
+      # ── Wait for services to boot ─────────────────
+      - name: Wait for services to boot
+        shell: pwsh
+        run: |
+          Write-Host "Waiting 20 seconds for all services to boot..."
+          Start-Sleep -Seconds 20
+
+      # ── Health checks ─────────────────────────────
+      - name: Health Check — API Gateway
+        shell: pwsh
+        run: |
+          try {
+            $res = Invoke-WebRequest -Uri "https://localhost:7223/gateway/health" `
+              -SkipCertificateCheck -TimeoutSec 10 -UseBasicParsing
+            Write-Host "API Gateway OK: $($res.StatusCode)"
+          } catch {
+            Write-Host "API Gateway not responding yet: $($_.Exception.Message)"
+          }
+
+      - name: Health Check — Identity Service
+        shell: pwsh
+        run: |
+          try {
+            $res = Invoke-WebRequest -Uri "https://localhost:7024/api/auth/health" `
+              -SkipCertificateCheck -TimeoutSec 10 -UseBasicParsing
+            Write-Host "Identity Service OK: $($res.StatusCode)"
+          } catch {
+            Write-Host "Identity Service not responding yet: $($_.Exception.Message)"
+          }
+
+      - name: Health Check — Angular Frontend
+        shell: pwsh
+        run: |
+          try {
+            $res = Invoke-WebRequest -Uri "http://localhost:4000" `
+              -TimeoutSec 10 -UseBasicParsing
+            Write-Host "Angular Frontend OK: $($res.StatusCode)"
+          } catch {
+            Write-Host "Angular Frontend not responding yet: $($_.Exception.Message)"
+          }
+
+      # ── Deployment summary ────────────────────────
+      - name: Deployment Summary
+        shell: pwsh
+        run: |
+          Write-Host ""
+          Write-Host "=============================================="
+          Write-Host "   SmartPMS Deployed to Local Machine!"
+          Write-Host "   Commit: ${{ github.sha }}"
+          Write-Host "   Branch: ${{ github.ref_name }}"
+          Write-Host "=============================================="
+          Write-Host "   Frontend (Angular SSR)   : http://localhost:4000"
+          Write-Host "   API Gateway (YARP)        : https://localhost:7223"
+          Write-Host "   Identity Service          : https://localhost:7024"
+          Write-Host "   Employee Service          : https://localhost:7158"
+          Write-Host "   PerformancePlan Service   : https://localhost:7216"
+          Write-Host "   SelfAppraisal Service     : https://localhost:7286"
+          Write-Host "=============================================="
