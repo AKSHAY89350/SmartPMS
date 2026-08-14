@@ -39,8 +39,10 @@ select {
   padding: 11px;
   border: 1px solid #ccc;
   border-radius: 8px;
+  box-sizing: border-box;
 }
 
+/* Button — always clickable, never disabled */
 button {
   width: 100%;
   padding: 12px;
@@ -50,26 +52,74 @@ button {
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s ease, opacity 0.2s ease;
 }
 
-button:disabled {
-  background: #8aa0e6;
+button:hover {
+  background: #1a40b8;
 }
 
+/* Loading state — shows spinner but stays clickable */
+button.loading {
+  opacity: 0.85;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Spinner */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Alert banners */
 .alert {
-  padding: 10px;
+  padding: 11px 14px;
   border-radius: 8px;
-  margin-bottom: 15px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+  animation: fadeIn 0.25s ease;
+}
+
+.alert-icon {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .error {
-  background: #ffe2e2;
+  background: #fff0f0;
   color: #b00020;
+  border: 1px solid #ffc5c5;
 }
 
 .success {
   background: #e6ffed;
   color: #0f7b2f;
+  border: 1px solid #a3e6b8;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .login-link {

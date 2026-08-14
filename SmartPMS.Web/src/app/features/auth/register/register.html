@@ -4,10 +4,12 @@
     <p>Register to Smart PMS</p>
 
     <div class="alert error" *ngIf="errorMessage">
+      <span class="alert-icon">&#9888;</span>
       {{ errorMessage }}
     </div>
 
     <div class="alert success" *ngIf="successMessage">
+      <span class="alert-icon">&#10003;</span>
       {{ successMessage }}
     </div>
 
@@ -43,8 +45,9 @@
       </select>
     </div>
 
-    <button (click)="register()" [disabled]="isLoading">
-      {{ isLoading ? 'Please wait...' : 'Register' }}
+    <button (click)="register()" [class.loading]="isLoading">
+      <span *ngIf="isLoading" class="spinner"></span>
+      <span>{{ isLoading ? 'Registering...' : 'Register' }}</span>
     </button>
 
     <div class="login-link">
