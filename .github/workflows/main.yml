@@ -90,7 +90,7 @@ jobs:
 
       # ── Stop any previously running services ──────
       - name: Stop old services
-        shell: pwsh
+        shell: powershell
         run: |
           Write-Host "Stopping old SmartPMS processes..."
           $dotnetProcs = @(
@@ -119,7 +119,7 @@ jobs:
 
       # ── Build backend ─────────────────────────────
       - name: Restore & Build Backend
-        shell: pwsh
+        shell: powershell
         run: |
           Write-Host "Building backend..."
           dotnet restore ${{ env.SOLUTION_FILE }}
@@ -128,7 +128,7 @@ jobs:
 
       # ── Start all .NET microservices ──────────────
       - name: Start API Gateway
-        shell: pwsh
+        shell: powershell
         run: |
           Start-Process -FilePath "dotnet" `
             -ArgumentList "run --project SmartPMS.ApiGateway --configuration Release --no-build" `
@@ -137,7 +137,7 @@ jobs:
           Write-Host "API Gateway started."
 
       - name: Start Identity Service
-        shell: pwsh
+        shell: powershell
         run: |
           Start-Process -FilePath "dotnet" `
             -ArgumentList "run --project SmartPMS.IdentityService --configuration Release --no-build" `
@@ -146,7 +146,7 @@ jobs:
           Write-Host "Identity Service started."
 
       - name: Start Employee Service
-        shell: pwsh
+        shell: powershell
         run: |
           Start-Process -FilePath "dotnet" `
             -ArgumentList "run --project SmartPMS.EmployeeService --configuration Release --no-build" `
@@ -155,7 +155,7 @@ jobs:
           Write-Host "Employee Service started."
 
       - name: Start PerformancePlan Service
-        shell: pwsh
+        shell: powershell
         run: |
           Start-Process -FilePath "dotnet" `
             -ArgumentList "run --project SmartPMS.PerformancePlanService --configuration Release --no-build" `
@@ -164,7 +164,7 @@ jobs:
           Write-Host "PerformancePlan Service started."
 
       - name: Start SelfAppraisal Service
-        shell: pwsh
+        shell: powershell
         run: |
           Start-Process -FilePath "dotnet" `
             -ArgumentList "run --project SmartPMS.SelfAppraisalService --configuration Release --no-build" `
@@ -174,17 +174,17 @@ jobs:
 
       # ── Build & Start Angular SSR frontend ────────
       - name: Install Angular dependencies
-        shell: pwsh
+        shell: powershell
         working-directory: ${{ env.ANGULAR_DIR }}
         run: npm ci
 
       - name: Build Angular SSR (production)
-        shell: pwsh
+        shell: powershell
         working-directory: ${{ env.ANGULAR_DIR }}
         run: npm run build -- --configuration production
 
       - name: Start Angular SSR Server
-        shell: pwsh
+        shell: powershell
         working-directory: ${{ env.ANGULAR_DIR }}
         run: |
           $serverFile = Join-Path (Get-Location) "dist\SmartPMS.Web\server\server.mjs"
@@ -197,14 +197,14 @@ jobs:
 
       # ── Wait for services to boot ─────────────────
       - name: Wait for services to boot
-        shell: pwsh
+        shell: powershell
         run: |
           Write-Host "Waiting 20 seconds for all services to boot..."
           Start-Sleep -Seconds 20
 
       # ── Health checks ─────────────────────────────
       - name: Health Check — API Gateway
-        shell: pwsh
+        shell: powershell
         run: |
           try {
             $res = Invoke-WebRequest -Uri "https://localhost:7223/gateway/health" `
@@ -215,7 +215,7 @@ jobs:
           }
 
       - name: Health Check — Identity Service
-        shell: pwsh
+        shell: powershell
         run: |
           try {
             $res = Invoke-WebRequest -Uri "https://localhost:7024/api/auth/health" `
@@ -226,7 +226,7 @@ jobs:
           }
 
       - name: Health Check — Angular Frontend
-        shell: pwsh
+        shell: powershell
         run: |
           try {
             $res = Invoke-WebRequest -Uri "http://localhost:4000" `
@@ -238,7 +238,7 @@ jobs:
 
       # ── Deployment summary ────────────────────────
       - name: Deployment Summary
-        shell: pwsh
+        shell: powershell
         run: |
           Write-Host ""
           Write-Host "=============================================="
