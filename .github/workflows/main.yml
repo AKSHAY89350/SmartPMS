@@ -189,6 +189,7 @@ jobs:
         run: |
           $serverFile = Join-Path (Get-Location) "dist\SmartPMS.Web\server\server.mjs"
           $env:PORT = "4000"
+          $env:NG_ALLOWED_HOSTS = "*"
           Start-Process -FilePath "node" `
             -ArgumentList $serverFile `
             -WorkingDirectory (Get-Location) `

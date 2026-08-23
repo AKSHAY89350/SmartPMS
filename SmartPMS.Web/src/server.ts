@@ -7,6 +7,9 @@ import {
 import express from 'express';
 import { join } from 'node:path';
 
+// Allow all hosts (localhost, local IP, custom domains) for SSR
+process.env['NG_ALLOWED_HOSTS'] = process.env['NG_ALLOWED_HOSTS'] || '*';
+
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
