@@ -414,3 +414,7 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# GitHub Actions self-hosted runner
+actions-runner/
+actions_runner/
