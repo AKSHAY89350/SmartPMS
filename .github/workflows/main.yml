@@ -127,50 +127,31 @@ jobs:
           Write-Host "Backend build complete."
 
       # ── Start all .NET microservices ──────────────
-      - name: Start API Gateway
+      - name: Start All Backend Services
         shell: powershell
         run: |
-          Start-Process -FilePath "dotnet" `
-            -ArgumentList "run --project SmartPMS.ApiGateway --configuration Release --no-build --urls 'https://0.0.0.0:7223;http://0.0.0.0:5157'" `
-            -WorkingDirectory "${{ github.workspace }}" `
-            -WindowStyle Hidden
-          Write-Host "API Gateway started."
+          $root = "${{ github.workspace }}"
+          Start-Process "$root\SmartPMS.IdentityService\bin\Release\net10.0\SmartPMS.IdentityService.exe" `
+            -ArgumentList "--urls https://0.0.0.0:7024;http://0.0.0.0:5001 --environment Development" `
+            -WorkingDirectory "$root\SmartPMS.IdentityService" -WindowStyle Hidden
 
-      - name: Start Identity Service
-        shell: powershell
-        run: |
-          Start-Process -FilePath "dotnet" `
-            -ArgumentList "run --project SmartPMS.IdentityService --configuration Release --no-build" `
-            -WorkingDirectory "${{ github.workspace }}" `
-            -WindowStyle Hidden
-          Write-Host "Identity Service started."
+          Start-Process "$root\SmartPMS.EmployeeService\bin\Release\net10.0\SmartPMS.EmployeeService.exe" `
+            -ArgumentList "--urls https://0.0.0.0:7158;http://0.0.0.0:5002 --environment Development" `
+            -WorkingDirectory "$root\SmartPMS.EmployeeService" -WindowStyle Hidden
 
-      - name: Start Employee Service
-        shell: powershell
-        run: |
-          Start-Process -FilePath "dotnet" `
-            -ArgumentList "run --project SmartPMS.EmployeeService --configuration Release --no-build" `
-            -WorkingDirectory "${{ github.workspace }}" `
-            -WindowStyle Hidden
-          Write-Host "Employee Service started."
+          Start-Process "$root\SmartPMS.PerformancePlanService\bin\Release\net10.0\SmartPMS.PerformancePlanService.exe" `
+            -ArgumentList "--urls https://0.0.0.0:7216;http://0.0.0.0:5003 --environment Development" `
+            -WorkingDirectory "$root\SmartPMS.PerformancePlanService" -WindowStyle Hidden
 
-      - name: Start PerformancePlan Service
-        shell: powershell
-        run: |
-          Start-Process -FilePath "dotnet" `
-            -ArgumentList "run --project SmartPMS.PerformancePlanService --configuration Release --no-build" `
-            -WorkingDirectory "${{ github.workspace }}" `
-            -WindowStyle Hidden
-          Write-Host "PerformancePlan Service started."
+          Start-Process "$root\SmartPMS.SelfAppraisalService\bin\Release\net10.0\SmartPMS.SelfAppraisalService.exe" `
+            -ArgumentList "--urls https://0.0.0.0:7286;http://0.0.0.0:5004 --environment Development" `
+            -WorkingDirectory "$root\SmartPMS.SelfAppraisalService" -WindowStyle Hidden
 
-      - name: Start SelfAppraisal Service
-        shell: powershell
-        run: |
-          Start-Process -FilePath "dotnet" `
-            -ArgumentList "run --project SmartPMS.SelfAppraisalService --configuration Release --no-build" `
-            -WorkingDirectory "${{ github.workspace }}" `
-            -WindowStyle Hidden
-          Write-Host "SelfAppraisal Service started."
+          Start-Process "$root\SmartPMS.ApiGateway\bin\Release\net10.0\SmartPMS.ApiGateway.exe" `
+            -ArgumentList "--urls https://0.0.0.0:7223;http://0.0.0.0:5157 --environment Development" `
+            -WorkingDirectory "$root\SmartPMS.ApiGateway" -WindowStyle Hidden
+
+          Write-Host "All 5 backend microservices started successfully."
 
       # ── Build & Start Angular SSR frontend ────────
       - name: Install Angular dependencies
