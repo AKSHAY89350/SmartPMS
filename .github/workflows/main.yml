@@ -131,7 +131,7 @@ jobs:
         shell: powershell
         run: |
           Start-Process -FilePath "dotnet" `
-            -ArgumentList "run --project SmartPMS.ApiGateway --configuration Release --no-build" `
+            -ArgumentList "run --project SmartPMS.ApiGateway --configuration Release --no-build --urls 'https://0.0.0.0:7223;http://0.0.0.0:5157'" `
             -WorkingDirectory "${{ github.workspace }}" `
             -WindowStyle Hidden
           Write-Host "API Gateway started."
