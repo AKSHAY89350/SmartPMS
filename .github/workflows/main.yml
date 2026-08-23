@@ -131,27 +131,33 @@ jobs:
         shell: powershell
         run: |
           $root = "${{ github.workspace }}"
-          Start-Process "$root\SmartPMS.IdentityService\bin\Release\net10.0\SmartPMS.IdentityService.exe" `
-            -ArgumentList "--urls https://0.0.0.0:7024;http://0.0.0.0:5001 --environment Development" `
-            -WorkingDirectory "$root\SmartPMS.IdentityService" -WindowStyle Hidden
 
-          Start-Process "$root\SmartPMS.EmployeeService\bin\Release\net10.0\SmartPMS.EmployeeService.exe" `
-            -ArgumentList "--urls https://0.0.0.0:7158;http://0.0.0.0:5002 --environment Development" `
-            -WorkingDirectory "$root\SmartPMS.EmployeeService" -WindowStyle Hidden
+          Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+            CommandLine = "`"$root\SmartPMS.IdentityService\bin\Release\net10.0\SmartPMS.IdentityService.exe`" --urls `"https://0.0.0.0:7024;http://0.0.0.0:5001`" --environment Development"
+            CurrentDirectory = "$root\SmartPMS.IdentityService"
+          }
 
-          Start-Process "$root\SmartPMS.PerformancePlanService\bin\Release\net10.0\SmartPMS.PerformancePlanService.exe" `
-            -ArgumentList "--urls https://0.0.0.0:7216;http://0.0.0.0:5003 --environment Development" `
-            -WorkingDirectory "$root\SmartPMS.PerformancePlanService" -WindowStyle Hidden
+          Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+            CommandLine = "`"$root\SmartPMS.EmployeeService\bin\Release\net10.0\SmartPMS.EmployeeService.exe`" --urls `"https://0.0.0.0:7158;http://0.0.0.0:5002`" --environment Development"
+            CurrentDirectory = "$root\SmartPMS.EmployeeService"
+          }
 
-          Start-Process "$root\SmartPMS.SelfAppraisalService\bin\Release\net10.0\SmartPMS.SelfAppraisalService.exe" `
-            -ArgumentList "--urls https://0.0.0.0:7286;http://0.0.0.0:5004 --environment Development" `
-            -WorkingDirectory "$root\SmartPMS.SelfAppraisalService" -WindowStyle Hidden
+          Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+            CommandLine = "`"$root\SmartPMS.PerformancePlanService\bin\Release\net10.0\SmartPMS.PerformancePlanService.exe`" --urls `"https://0.0.0.0:7216;http://0.0.0.0:5003`" --environment Development"
+            CurrentDirectory = "$root\SmartPMS.PerformancePlanService"
+          }
 
-          Start-Process "$root\SmartPMS.ApiGateway\bin\Release\net10.0\SmartPMS.ApiGateway.exe" `
-            -ArgumentList "--urls https://0.0.0.0:7223;http://0.0.0.0:5157 --environment Development" `
-            -WorkingDirectory "$root\SmartPMS.ApiGateway" -WindowStyle Hidden
+          Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+            CommandLine = "`"$root\SmartPMS.SelfAppraisalService\bin\Release\net10.0\SmartPMS.SelfAppraisalService.exe`" --urls `"https://0.0.0.0:7286;http://0.0.0.0:5004`" --environment Development"
+            CurrentDirectory = "$root\SmartPMS.SelfAppraisalService"
+          }
 
-          Write-Host "All 5 backend microservices started successfully."
+          Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+            CommandLine = "`"$root\SmartPMS.ApiGateway\bin\Release\net10.0\SmartPMS.ApiGateway.exe`" --urls `"https://0.0.0.0:7223;http://0.0.0.0:5157`" --environment Development"
+            CurrentDirectory = "$root\SmartPMS.ApiGateway"
+          }
+
+          Write-Host "All 5 backend microservices started successfully (detached)."
 
       # ── Build & Start Angular SSR frontend ────────
       - name: Install Angular dependencies
@@ -168,14 +174,13 @@ jobs:
         shell: powershell
         working-directory: ${{ env.ANGULAR_DIR }}
         run: |
-          $serverFile = Join-Path (Get-Location) "dist\SmartPMS.Web\server\server.mjs"
-          $env:PORT = "4000"
-          $env:NG_ALLOWED_HOSTS = "*"
-          Start-Process -FilePath "node" `
-            -ArgumentList $serverFile `
-            -WorkingDirectory (Get-Location) `
-            -WindowStyle Hidden
-          Write-Host "Angular SSR frontend started on port 4000."
+          $webDir = "${{ github.workspace }}\${{ env.ANGULAR_DIR }}"
+          $serverFile = "$webDir\dist\SmartPMS.Web\server\server.mjs"
+          Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+            CommandLine = "cmd.exe /c set PORT=4000&& set NG_ALLOWED_HOSTS=*&& node `"$serverFile`""
+            CurrentDirectory = $webDir
+          }
+          Write-Host "Angular SSR frontend started on port 4000 (detached)."
 
       # ── Wait for services to boot ─────────────────
       - name: Wait for services to boot
